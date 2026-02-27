@@ -1,0 +1,17 @@
+name: file_commander_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - fastapi
+    - uvicorn
+    - sqlalchemy
+    - psycopg2-binary
+    - python-dotenv
+    - aleph-alpha-client
+    - openai
+    - google-generativeai
+    - requests

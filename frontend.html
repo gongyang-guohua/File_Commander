@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Commander AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
+        h1, h2 { color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
+        .tab.active { border-bottom: 2px solid #007bff; color: #007bff; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f8f8; }
+        button { padding: 6px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        .action-btn { margin-right: 5px; }
+        .dupe-group { border: 1px solid #ffcccc; margin-bottom: 15px; padding: 10px; background-color: #fff5f5; border-radius: 4px; }
+        .scan-status { font-style: italic; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>File Commander AI</h1>
+    <div class="scan-status" id="statusInfo">系统就绪</div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('files')">文件列表</div>
+        <div class="tab" onclick="showTab('duplicates')">重复整理</div>
+        <div class="tab" onclick="showTab('projects')">项目视图</div>
+    </div>
+
+    <div id="tab-files">
+        <input type="text" id="searchInput" placeholder="搜索文件名..." style="padding: 8px; width: 300px;">
+        <button onclick="loadFiles()">搜索</button>
+        <table id="filesTable">
+            <thead>
+                <tr>
+                    <th>文件名</th>
+                    <th>路径</th>
+                    <th>大小</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="tab-duplicates" style="display:none;">
+        <h2>重复文件检测</h2>
+        <button onclick="loadDuplicates()">刷新重复列表</button>
+        <div id="duplicatesList"></div>
+    </div>
+
+    <div id="tab-projects" style="display:none;">
+        <h2>项目智能分类</h2>
+        <p>选择一个文件或文件夹，让 AI 分析其归属。</p>
+        <div id="aiSuggestion"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    async function loadFiles() {
+        const q = document.getElementById('searchInput').value;
+        const res = await fetch(`${API_URL}/files?limit=50&q=${q}`);
+        const files = await res.json();
+        const tbody = document.querySelector('#filesTable tbody');
+        tbody.innerHTML = '';
+        files.forEach(f => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${f.filename}</td>
+                <td><small>${f.path}</small></td>
+                <td>${(f.size / 1024 / 1024).toFixed(2)} MB</td>
+                <td>
+                    <button class="action-btn" onclick="openFile('${f.path.replace(/\\/g, '\\\\')}')">打开</button>
+                    <button class="action-btn" onclick="classify('${f.path.replace(/\\/g, '\\\\')}')">AI分析</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function loadDuplicates() {
+        const res = await fetch(`${API_URL}/duplicates`);
+        const groups = await res.json();
+        const container = document.getElementById('duplicatesList');
+        container.innerHTML = '';
+        
+        if (groups.length === 0) {
+            container.innerHTML = '<p>暂无重复文件。</p>';
+            return;
+        }
+
+        groups.forEach(g => {
+            const div = document.createElement('div');
+            div.className = 'dupe-group';
+            let filesHtml = '<ul>';
+            g.files.forEach(f => {
+                filesHtml += `
+                    <li>
+                        <strong>${f.drive}</strong>: ${f.path} (${(f.size/1024/1024).toFixed(2)} MB)
+                        <button onclick="openFile('${f.path.replace(/\\/g, '\\\\')}')">查看</button>
+                    </li>
+                `;
+            });
+            filesHtml += '</ul>';
+            div.innerHTML = `<p><strong>Hash:</strong> ${g.hash} (重复数: ${g.count})</p>${filesHtml}`;
+            container.appendChild(div);
+        });
+    }
+
+    async function openFile(path) {
+        try {
+            const res = await fetch(`${API_URL}/open?path=${encodeURIComponent(path)}`, { method: 'POST' });
+            if (!res.ok) alert("打开失败");
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function classify(path) {
+        document.getElementById('aiSuggestion').innerText = "AI 正在分析...";
+        showTab('projects');
+        try {
+            const res = await fetch(`${API_URL}/classify?path=${encodeURIComponent(path)}`, { method: 'POST' });
+            const data = await res.json();
+            document.getElementById('aiSuggestion').innerText = JSON.stringify(data, null, 2);
+        } catch (e) {
+            document.getElementById('aiSuggestion').innerText = "分析失败: " + e;
+        }
+    }
+
+    function showTab(tabName) {
+        document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+        document.getElementById('tab-' + tabName).style.display = 'block';
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+        
+        if(tabName === 'files') loadFiles();
+        if(tabName === 'duplicates') loadDuplicates();
+    }
+
+    // Initial load
+    loadFiles();
+</script>
+
+</body>
+</html>
