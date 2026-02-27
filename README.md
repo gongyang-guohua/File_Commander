@@ -80,7 +80,7 @@
 4. 运行核心脚本
    - 扫描文件并生成哈希/索引（示例）：
      ```powershell
-     python src/files_scan.py --path "J:\" --hash
+     python src/files_scan.py "J:\" --hash
      ```
    - 使用技能脚本：
      ```powershell
