@@ -5,7 +5,7 @@ from pathlib import Path
 from llama_cpp import Llama
 
 # Configuration
-MODEL_PATH = r"F:\File_Commander\models\Qwen2.5-0.5B-Instruct-Q4_K_M.gguf"
+MODEL_PATH = "/Volumes/Workspace/Models/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf"
 
 # Initialize Local LLM
 # Check if model exists

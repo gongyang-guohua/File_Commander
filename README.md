@@ -41,12 +41,12 @@
     *   `file_renamer/`: 文件重命名处理技能。
 *   **`src/`**: 核心源代码主目录。包含数据库连接 (`database.py`)、实体模型 (`models.py`)、AI分类代理 (`ai_classifier.py`) 以及多种底层扫描、备份等执行脚本。
 *   **`scripts/`**: 独立实用的业务流处理脚本，如智能图纸组织 (`smart_organizer.py`)、规范标准整理 (`standard_organizer.py`) 及其配置文件。
-*   **`models/`**: 本地大模型文件存放或模型参数相关配置目录。
+*   **`/Volumes/Workspace/Models/`**: 本地大模型文件存放或模型参数相关配置目录。
 *   **`test_openai_env/`**: 测试与调试脚本目录，专门用于测试验证语言模型 API 端点 (如兼容 OpenAI 格式的接口测试 JS/MJS 脚本)。
 *   **`tests/`**: 一般性单元测试与集成测试代码目录。
 *   **`frontend.html`**: 项目自带的简易前端可视化交互界面。
 *   **`file_query.sql`**: 用于快速直接从本地 PostgreSQL 数据库中提取、测试或分析数据的 SQL 脚本。
-*   **`start_llm_server.ps1`**: 用于一键启动本地 LLM 推理服务的 PowerShell 脚本。
+*   **`start_llm_server.sh`**: 用于一键启动本地 LLM 推理服务的 Bash 脚本。
 *   **`requirements.txt` / `environment.yml`**: Python 项目及 Conda 环境的核心依赖声明文件。
 
 ## 如何使用
@@ -54,41 +54,40 @@
 下面说明如何在本地环境快速运行与使用该应用：
 
 1. 环境准备
-   - 建议使用 Python 3.10+，并在项目根目录创建虚拟环境：
-     ```powershell
-     python -m venv .venv
-     .\.venv\Scripts\Activate.ps1
+   - 建议使用 Python 3.12+，并在项目根目录创建虚拟环境：
+     ```bash
+     python3.12 -m venv .venv
+     source .venv/bin/activate
      ```
    - 安装依赖：
-     ```powershell
+     ```bash
      pip install -r requirements.txt
-     # 或者使用 conda
-     conda env create -f environment.yml
-     conda activate <env-name>
+     # 或者使用 uv (推荐，速度极快)
+     uv pip install -r requirements.txt
      ```
 
 2. 配置模型与数据目录
-   - 将本地模型文件放入 `models/` 目录（如已有 gguf 模型文件）。
+   - 将本地模型文件放入 `/Volumes/Workspace/Models/` 目录（如已有 gguf 模型文件）。
    - 如需连接数据库，请根据 `src/database.py` 中的配置修改环境变量或 `environment.yml` 中的连接信息（Postgres）。
 
 3. 启动本地 LLM 推理服务（可选）
    - 若使用项目中的推理脚本或本地服务，运行：
      ```powershell
-     .\start_llm_server.ps1
+     ./start_llm_server.sh
      ```
 
 4. 运行核心脚本
    - 扫描文件并生成哈希/索引（示例）：
      ```powershell
-     python src/files_scan.py "J:\" --hash
+     python3 src/files_scan.py "/Volumes/Workspace/References" --hash
      ```
    - 使用技能脚本：
      ```powershell
-     python skills/file_scanner/tools.py J:\ --hash
+     python3 skills/file_scanner/tools.py "/Volumes/Workspace/References" --hash
      ```
    - 运行主程序（示例）：
      ```powershell
-     python src/main.py
+     python3 src/main.py
      ```
 
 5. 常见操作

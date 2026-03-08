@@ -36,3 +36,12 @@ class Duplicate(Base):
     duplicate_file_id = Column(Integer, ForeignKey('files.id'), nullable=False)
     status = Column(String, default='pending')  # pending, resolved, ignored
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class DeduplicationLog(Base):
+    __tablename__ = 'deduplication_logs'
+    id = Column(Integer, primary_key=True)
+    deleted_path = Column(String, nullable=False)
+    kept_path = Column(String, nullable=False)
+    file_hash = Column(String, nullable=False)
+    file_size = Column(BigInteger, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), server_default=func.now())
